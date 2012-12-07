@@ -12,7 +12,8 @@
 """
 
 from __future__ import unicode_literals
-from . import lookup, LABELS, decode, encode, utf8_decode, utf8_encode
+from . import (lookup, LABELS, decode, encode, iterdecode, iterencode,
+               utf8_decode, utf8_encode)
 
 
 def do_lookup(label):
@@ -75,6 +76,38 @@ def test_encode():
     assert encode('é', 'utf-16') == b'\xe9\x00'
     assert encode('é', 'utf-16le') == b'\xe9\x00'
     assert encode('é', 'utf-16be') == b'\x00\xe9'
+
+
+def test_iterdecode():
+    assert ''.join(iterdecode([], 'latin1')) == ''
+    assert ''.join(iterdecode([b''], 'latin1')) == ''
+    assert ''.join(iterdecode([b'\xe9'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([b'hello'], 'latin1')) == 'hello'
+    assert ''.join(iterdecode([b'he', b'llo'], 'latin1')) == 'hello'
+    assert ''.join(iterdecode([b'\xc3\xa9'], 'latin1')) == 'Ã©'
+    assert ''.join(iterdecode([b'\xEF\xBB\xBF\xc3\xa9'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([
+        b'', b'\xEF', b'', b'', b'\xBB\xBF\xc3', b'\xa9'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([b'\xEF\xBB\xBF'], 'latin1')) == ''
+    assert ''.join(iterdecode([b'\xEF\xBB'], 'latin1')) == 'ï»'
+    assert ''.join(iterdecode([b'\xFE\xFF\x00\xe9'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([b'\xFF\xFE\xe9\x00'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([
+        b'', b'\xFF', b'', b'', b'\xFE\xe9', b'\x00'], 'latin1')) == 'é'
+    assert ''.join(iterdecode([
+        b'', b'h\xe9', b'llo'], 'x-user-defined')) == 'h\uF7E9llo'
+
+
+def test_iterencode():
+    assert b''.join(iterencode([], 'latin1')) == b''
+    assert b''.join(iterencode([''], 'latin1')) == b''
+    assert b''.join(iterencode(['é'], 'latin1')) == b'\xe9'
+    assert b''.join(iterencode(['', 'é', '', ''], 'latin1')) == b'\xe9'
+    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16')) == b'\xe9\x00'
+    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16le')) == b'\xe9\x00'
+    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16be')) == b'\x00\xe9'
+    assert b''.join(iterencode([
+        '', 'h\uF7E9', '', 'llo'], 'x-user-defined')) == b'h\xe9llo'
 
 
 def test_utf8_decode():

@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 
 import string
 import codecs
+import itertools
 
 from .labels import LABELS
 
@@ -64,6 +65,48 @@ def decode(byte_string, label, errors='replace'):
 def encode(unicode_string, label, errors='strict'):
     """Encode an Unicode string with an encoding given by its label."""
     return unicode_string.encode(lookup(label), errors)
+
+
+def iterdecode(iterable, label, errors='strict', **kwargs):
+    """
+    Decode an iterable of byte strings with a fallback encoding
+    given by its label.
+
+    Return an iterable of Unicode strings.
+
+    **Note:** in accordance with the Encoding standard,
+    the default error handling for iterdecode (but not for iterencode)
+    is ``replace``, ie. insert U+FFFD for invalid bytes.
+
+    """
+    # Throw on invalid label, even if there is a BOM.
+    encoding = lookup(label)
+    iterator = iter(iterable)
+    buffer_ = b''
+    for chunck in iterator:
+        buffer_ += chunck
+        if buffer_.startswith((b'\xFF\xFE', b'\xFE\xFF')):
+            # Python’s utf_16 picks BE or LE based on the BOM.
+            encoding = 'utf_16'
+            break
+        elif buffer_.startswith(b'\xEF\xBB\xBF'):
+            # Python’s utf_8_sig skips the BOM.
+            encoding = 'utf_8_sig'
+            break
+        elif len(buffer_) >= 3:
+            break
+    iterator = itertools.chain([buffer_], iterator)
+    return codecs.iterdecode(iterator, encoding, errors, **kwargs)
+
+
+def iterencode(iterable, label, errors='strict', **kwargs):
+    """
+    Encode an iterable of Unicode strings with an encoding given by its label.
+
+    Return an iterable of byte strings.
+
+    """
+    return codecs.iterencode(iterable, lookup(label), errors, **kwargs)
 
 
 # These two are here for completeness
