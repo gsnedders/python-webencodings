@@ -12,7 +12,7 @@
 """
 
 from __future__ import unicode_literals
-from . import lookup
+from . import lookup, LABELS
 
 
 def do_lookup(label):
@@ -40,3 +40,10 @@ def test_labels():
     assert do_lookup('LATIN1') == 'windows-1252'
     assert do_lookup('latin-1') == None
     assert do_lookup('LATİN1') == None  # ASCII-only case insensitivity.
+
+
+def test_names_are_valid_python():
+    """Encoding name can be used with Python’s .encode()"""
+    # TODO: implement x-user-defined
+    for name in set(LABELS.values()) - set(['x-user-defined']):
+        assert ''.encode(name) == b''

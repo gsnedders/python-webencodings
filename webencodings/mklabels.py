@@ -17,6 +17,16 @@ except ImportError:
     from urllib.request import urlopen
 
 
+# Some names in Encoding are not valid Python aliases.
+# Remap these, but only these.
+# XXX should we keep the Encoding names and map these elsewhere?
+NAME_MAP = {
+    'iso-8859-8-i': 'iso-8859-8',
+    'x-mac-cyrillic': 'mac-cyrillic',
+    'macintosh': 'mac-roman',
+    'windows-874': 'cp874'}
+
+
 def generate(url):
     parts = ['''\
 """
@@ -37,7 +47,8 @@ def generate(url):
 
 LABELS = {''']
     labels = [
-        (repr(label).lstrip('u'), repr(encoding['name']).lstrip('u'))
+        (repr(label).lstrip('u'),
+         repr(NAME_MAP.get(encoding['name'], encoding['name'])).lstrip('u'))
         for category in json.loads(urlopen(url).read().decode('ascii'))
         for encoding in category['encodings']
         for label in encoding['labels']]
