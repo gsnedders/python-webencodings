@@ -44,8 +44,7 @@ def test_labels():
 
 def test_names_are_valid_python():
     """Encoding name can be used with Python’s .encode()"""
-    # TODO: implement x-user-defined
-    for name in set(LABELS.values()) - set(['x-user-defined']):
+    for name in set(LABELS.values()):
         assert ''.encode(name) == b''
 
 
@@ -87,3 +86,10 @@ def test_utf8_decode():
 def test_utf8_encode():
     # No BOM in the encoded string
     assert utf8_encode('é') == b'\xc3\xa9'
+
+
+def test_x_user_defined():
+    encoded = b'2,\x0c\x0b\x1aO\xd9#\xcb\x0f\xc9\xbbt\xcf\xa8\xca'
+    decoded = '2,\x0c\x0b\x1aO\uf7d9#\uf7cb\x0f\uf7c9\uf7bbt\uf7cf\uf7a8\uf7ca'
+    assert decode(encoded, 'x-user-defined') == decoded
+    assert encode(decoded, 'x-user-defined') == encoded

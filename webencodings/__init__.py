@@ -13,7 +13,10 @@
 """
 
 from __future__ import unicode_literals
+
 import string
+import codecs
+
 from .labels import LABELS
 
 
@@ -29,6 +32,13 @@ def lookup(label):
     # ASCII_WHITESPACE is Unicode, so the result of .strip() is Unicode.
     # We want the Unicode version of .translate().
     return LABELS[label.strip(ASCII_WHITESPACE).translate(ASCII_LOWERCASE_MAP)]
+
+
+@codecs.register
+def _load_x_user_defined(label):
+    if label == 'x-user-defined':
+        from .x_user_defined import codec_info
+        return codec_info
 
 
 def decode(byte_string, label, errors='replace'):
