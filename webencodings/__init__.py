@@ -16,110 +16,193 @@ from __future__ import unicode_literals
 
 import string
 import codecs
-import itertools
 
 from .labels import LABELS
 
+
+VERSION = '0.1'
 
 # U+0009, U+000A, U+000C, U+000D, and U+0020.
 ASCII_WHITESPACE = '\t\n\f\r '
 
 ASCII_LOWERCASE_MAP = dict(zip(map(ord, string.ascii_uppercase),
                                map(ord, string.ascii_lowercase)))
+UTF8_SIG_DECODER = codecs.getdecoder('utf_8_sig')
+UTF16_DECODER = codecs.getdecoder('utf_16')
+INCREMENTAL_UTF8_SIG_DECODER = codecs.getincrementaldecoder('utf_8_sig')
+INCREMENTAL_UTF16_DECODER = codecs.getincrementaldecoder('utf_16')
+
+# Some names in Encoding are not valid Python aliases. Remap these.
+PYTHON_NAMES = {
+    'iso-8859-8-i': 'iso-8859-8',
+    'x-mac-cyrillic': 'mac-cyrillic',
+    'macintosh': 'mac-roman',
+    'windows-874': 'cp874'}
+
+CACHE = {}
 
 
 def lookup(label):
-    """Return the name of an encoding from a label or raise a LookupError."""
+    """
+    Look for an encoding by its label.
+
+    :param label: A string.
+    :returns:
+        An :class:`Encoding` object,
+        or :obj:`None` if the label is not valid per the standard.
+
+    """
     # ASCII_WHITESPACE is Unicode, so the result of .strip() is Unicode.
     # We want the Unicode version of .translate().
-    return LABELS[label.strip(ASCII_WHITESPACE).translate(ASCII_LOWERCASE_MAP)]
+    label = label.strip(ASCII_WHITESPACE).translate(ASCII_LOWERCASE_MAP)
+    name = LABELS.get(label)
+    if name is None:
+        return None
+    encoding = CACHE.get(name)
+    if encoding is None:
+        if name == 'x-user-defined':
+            from .x_user_defined import codec_info
+        else:
+            python_name = PYTHON_NAMES.get(name, name)
+            # None of the names should raise:
+            codec_info = codecs.lookup(python_name)
+        encoding = Encoding(name, codec_info)
+        CACHE[name] = encoding
+    return encoding
 
 
-@codecs.register
-def _load_x_user_defined(label):
-    if label == 'x-user-defined':
-        from .x_user_defined import codec_info
-        return codec_info
+class Encoding(object):
+    def __init__(self, name, codec):
+        self.name = name
+        self._decoder = codec.decode
+        self._encoder = codec.encode
+        self._incremental_decoder = codec.incrementaldecoder
+        self._incremental_encoder = codec.incrementalencoder
 
+    def decode(self, input, errors='replace'):
+        """
+        Decode a single string.
 
-def decode(byte_string, label, errors='replace'):
-    """
-    Decode a byte string with a fallback encoding given by its label.
+        :param input: A byte string
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :return: An Unicode string
 
-    **Note:** in accordance with the Encoding standard,
-    the default error handling for decode (but not for encode) is ``replace``,
-    ie. insert U+FFFD for invalid bytes.
-
-    """
-    # Throw on invalid label, even if there is a BOM.
-    encoding = lookup(label)
-    if byte_string.startswith((b'\xFF\xFE', b'\xFE\xFF')):
-        # Python’s utf_16 picks BE or LE based on the BOM.
-        encoding = 'utf_16'
-    elif byte_string.startswith(b'\xEF\xBB\xBF'):
-        # Python’s utf_8_sig skips the BOM.
-        encoding = 'utf_8_sig'
-    return byte_string.decode(encoding, errors)
-
-
-def encode(unicode_string, label, errors='strict'):
-    """Encode an Unicode string with an encoding given by its label."""
-    return unicode_string.encode(lookup(label), errors)
-
-
-def iterdecode(iterable, label, errors='strict', **kwargs):
-    """
-    Decode an iterable of byte strings with a fallback encoding
-    given by its label.
-
-    Return an iterable of Unicode strings.
-
-    **Note:** in accordance with the Encoding standard,
-    the default error handling for iterdecode (but not for iterencode)
-    is ``replace``, ie. insert U+FFFD for invalid bytes.
-
-    """
-    # Throw on invalid label, even if there is a BOM.
-    encoding = lookup(label)
-    iterator = iter(iterable)
-    buffer_ = b''
-    for chunck in iterator:
-        buffer_ += chunck
-        if buffer_.startswith((b'\xFF\xFE', b'\xFE\xFF')):
+        """
+        if input.startswith((b'\xFF\xFE', b'\xFE\xFF')):
             # Python’s utf_16 picks BE or LE based on the BOM.
-            encoding = 'utf_16'
-            break
-        elif buffer_.startswith(b'\xEF\xBB\xBF'):
+            decoder = UTF16_DECODER
+        elif input.startswith(b'\xEF\xBB\xBF'):
             # Python’s utf_8_sig skips the BOM.
-            encoding = 'utf_8_sig'
-            break
-        elif len(buffer_) >= 3:
-            break
-    iterator = itertools.chain([buffer_], iterator)
-    return codecs.iterdecode(iterator, encoding, errors, **kwargs)
+            decoder = UTF8_SIG_DECODER
+        else:
+            decoder = self._decoder
+        return decoder(input, errors)[0]
 
+    def encode(self, input, errors='strict'):
+        """
+        Encode a single string.
 
-def iterencode(iterable, label, errors='strict', **kwargs):
-    """
-    Encode an iterable of Unicode strings with an encoding given by its label.
+        :param input: An Unicode string.
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :return: A byte string.
 
-    Return an iterable of byte strings.
+        """
+        return self._encoder(input, errors)[0]
 
-    """
-    return codecs.iterencode(iterable, lookup(label), errors, **kwargs)
+    def iter_decode(self, input, errors='replace'):
+        """
+        "Pull-based" decoding.
 
+        :param input: An iterable of byte strings.
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :returns: An iterable of Unicode strings.
 
-# These two are here for completeness
-# and to give a nicer API than "Use utf_8_sig in, utf_8 out".
+        """
+        decoder = self.make_incremental_decoder(errors)
+        for chunck in input:
+            output = decoder(chunck)
+            if output:
+                yield output
+        output = decoder(b'', True)
+        if output:
+            yield output
 
-def utf8_decode(byte_string, errors='strict'):
-    """Decode a byte string as UTF-8, skipping any BOM."""
-    # Python’s utf_8_sig skips a b'\xEF\xBB\xBF' BOM if there is one,
-    # is like utf_8 otherwise.
-    return byte_string.decode('utf_8_sig', errors)
+    def iter_encode(self, input, errors='strict'):
+        """
+        "Pull-based" encoding.
 
+        :param input: An iterable of Unicode strings.
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :returns: An iterable of byte strings.
 
-def utf8_encode(unicode_string, errors='strict'):
-    """Encode an Unicode string as UTF-8."""
-    # Encode without a BOM.
-    return unicode_string.encode('utf_8', errors)
+        """
+        encoder = self.make_incremental_encoder(errors)
+        for chunck in input:
+            output = encoder(chunck)
+            if output:
+                yield output
+        output = encoder('', True)
+        if output:
+            yield output
+
+    def make_incremental_decoder(self, errors='replace'):
+        """
+        "Push-based" decoding.
+
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :returns:
+            An incremental decoder callable like this:
+
+            .. function:: incremental_decoder(input, final=False)
+
+                :param input: A byte string.
+                :param final:
+                    Indicate that no more input is available.
+                    Must be :obj:`True` if this is the last call.
+                :returns: An Unicode string.
+
+        """
+        class IncrementalDecoder(object):
+            def __init__(self, fallback_decoder):
+                self.fallback_decoder = fallback_decoder
+                self.decoder = None
+                self.buffer = b''
+
+            def __call__(self, input, final=False):
+                if not self.decoder:
+                    self.buffer += input
+                    if self.buffer.startswith((b'\xFF\xFE', b'\xFE\xFF')):
+                        # Python’s utf_16 picks BE or LE based on the BOM.
+                        decoder = INCREMENTAL_UTF16_DECODER
+                    elif self.buffer.startswith(b'\xEF\xBB\xBF'):
+                        # Python’s utf_8_sig skips the BOM.
+                        decoder = INCREMENTAL_UTF8_SIG_DECODER
+                    elif final or len(self.buffer) >= 3:
+                        decoder = self.fallback_decoder
+                    else:
+                        # Not enough data yet.
+                        return ''
+                    self.decoder = decoder(errors).decode
+                    input = self.buffer
+                return self.decoder(input, final)
+
+        return IncrementalDecoder(self._incremental_decoder)
+
+    def make_incremental_encoder(self, errors='strict'):
+        """
+        "Push-based" encoding.
+
+        :param errors: Type of error handling. See :func:`codecs.register`.
+        :returns:
+            An incremental encoder callable like this:
+
+            .. function:: incremental_encoder(input, final=False)
+
+                :param input: An Unicode string.
+                :param final:
+                    Indicate that no more input is available.
+                    Must be :obj:`True` if this is the last call.
+                :returns: A byte string.
+
+        """
+        return self._incremental_encoder(errors).encode
