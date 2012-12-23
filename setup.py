@@ -17,7 +17,7 @@ setup(
     license='BSD',
     author='Simon Sapin',
     author_email='simon.sapin@exyr.org',
-    description='Character encoding aliases for the web',
+    description='Character encoding aliases for legacy web content',
     long_description=LONG_DESCRIPTION,
     classifiers=[
         'Development Status :: 4 - Beta',
