@@ -39,7 +39,6 @@ API
 .. module:: webencodings
 
 .. autofunction:: lookup
-.. autofunction:: get_encoding
 
 .. class:: Encoding()
 

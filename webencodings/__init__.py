@@ -71,7 +71,7 @@ def lookup(label):
     return encoding
 
 
-def get_encoding(encoding):
+def _get_encoding(encoding):
     """
     Accept either an encoding object or label.
 
@@ -107,7 +107,7 @@ def decode(input, fallback_encoding, errors='replace'):
     :return: An Unicode string
 
     """
-    encoding = get_encoding(fallback_encoding)
+    encoding = _get_encoding(fallback_encoding)
     if input.startswith((b'\xFF\xFE', b'\xFE\xFF')):
         # Python’s utf_16 picks BE or LE based on the BOM.
         decoder = UTF16_DECODER
@@ -129,7 +129,7 @@ def encode(input, encoding=UTF8, errors='strict'):
     :return: A byte string.
 
     """
-    return get_encoding(encoding).codec_info.encode(input, errors)[0]
+    return _get_encoding(encoding).codec_info.encode(input, errors)[0]
 
 
 def iter_decode(input, fallback_encoding, errors='replace'):
@@ -194,7 +194,7 @@ def make_incremental_decoder(fallback_encoding, errors='replace'):
 
     """
     fallback_decoder = (
-        get_encoding(fallback_encoding).codec_info.incrementaldecoder)
+        _get_encoding(fallback_encoding).codec_info.incrementaldecoder)
     # Using a mutable dict to simulate nonlocal on Python 2.x
     state = dict(buffer=b'', decoder=None)
     def incremental_decoder(input, final=False):
@@ -239,4 +239,4 @@ def make_incremental_encoder(encoding=UTF8, errors='strict'):
             :returns: A byte string.
 
     """
-    return get_encoding(encoding).codec_info.incrementalencoder(errors).encode
+    return _get_encoding(encoding).codec_info.incrementalencoder(errors).encode
