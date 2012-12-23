@@ -12,7 +12,8 @@
 """
 
 from __future__ import unicode_literals
-from . import lookup, LABELS
+from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
+               make_incremental_decoder, make_incremental_encoder)
 
 
 def test_labels():
@@ -34,25 +35,23 @@ def test_labels():
     assert lookup('LATİN1') == None  # ASCII-only case insensitivity.
 
 
-def test_names_are_valid_python():
+def test_all_labels():
     """Encoding name can be used with Python’s .encode()"""
-    for name in set(LABELS.values()):
-        encoding = lookup(name)
-        assert encoding.decode(b'') == ''
-        assert encoding.encode('') == b''
+    for label in LABELS:
+        assert decode(b'', label) == ''
+        assert encode('', label) == b''
         for repeat in [0, 1, 12]:
-            assert list(encoding.iter_decode([b''] * repeat)) == []
-            assert list(encoding.iter_encode([''] * repeat)) == []
-        decoder = encoding.make_incremental_decoder()
+            assert list(iter_decode([b''] * repeat, label)) == []
+            assert list(iter_encode([''] * repeat, label)) == []
+        decoder = make_incremental_decoder(label)
         assert decoder(b'') == ''
         assert decoder(b'', final=True) == ''
-        encoder = encoding.make_incremental_encoder()
+        encoder = make_incremental_encoder(label)
         assert encoder('') == b''
         assert encoder('', final=True) == b''
 
 
 def test_decode():
-    decode = lambda string, label: lookup(label).decode(string)
     assert decode(b'\x80', 'latin1') == '€'
     assert decode(b'\xc3\xa9', 'utf8') == 'é'
     assert decode(b'\xc3\xa9', 'ascii') == 'Ã©'
@@ -73,7 +72,6 @@ def test_decode():
 
 
 def test_encode():
-    encode = lambda string, label: lookup(label).encode(string)
     assert encode('é', 'latin1') == b'\xe9'
     assert encode('é', 'utf8') == b'\xc3\xa9'
     assert encode('é', 'utf8') == b'\xc3\xa9'
@@ -83,36 +81,34 @@ def test_encode():
 
 
 def test_iter_decode():
-    iterdecode = lambda string, label: lookup(label).iter_decode(string)
-    assert ''.join(iterdecode([], 'latin1')) == ''
-    assert ''.join(iterdecode([b''], 'latin1')) == ''
-    assert ''.join(iterdecode([b'\xe9'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([b'hello'], 'latin1')) == 'hello'
-    assert ''.join(iterdecode([b'he', b'llo'], 'latin1')) == 'hello'
-    assert ''.join(iterdecode([b'\xc3\xa9'], 'latin1')) == 'Ã©'
-    assert ''.join(iterdecode([b'\xEF\xBB\xBF\xc3\xa9'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([
+    assert ''.join(iter_decode([], 'latin1')) == ''
+    assert ''.join(iter_decode([b''], 'latin1')) == ''
+    assert ''.join(iter_decode([b'\xe9'], 'latin1')) == 'é'
+    assert ''.join(iter_decode([b'hello'], 'latin1')) == 'hello'
+    assert ''.join(iter_decode([b'he', b'llo'], 'latin1')) == 'hello'
+    assert ''.join(iter_decode([b'\xc3\xa9'], 'latin1')) == 'Ã©'
+    assert ''.join(iter_decode([b'\xEF\xBB\xBF\xc3\xa9'], 'latin1')) == 'é'
+    assert ''.join(iter_decode([
         b'', b'\xEF', b'', b'', b'\xBB\xBF\xc3', b'\xa9'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([b'\xEF\xBB\xBF'], 'latin1')) == ''
-    assert ''.join(iterdecode([b'\xEF\xBB'], 'latin1')) == 'ï»'
-    assert ''.join(iterdecode([b'\xFE\xFF\x00\xe9'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([b'\xFF\xFE\xe9\x00'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([
+    assert ''.join(iter_decode([b'\xEF\xBB\xBF'], 'latin1')) == ''
+    assert ''.join(iter_decode([b'\xEF\xBB'], 'latin1')) == 'ï»'
+    assert ''.join(iter_decode([b'\xFE\xFF\x00\xe9'], 'latin1')) == 'é'
+    assert ''.join(iter_decode([b'\xFF\xFE\xe9\x00'], 'latin1')) == 'é'
+    assert ''.join(iter_decode([
         b'', b'\xFF', b'', b'', b'\xFE\xe9', b'\x00'], 'latin1')) == 'é'
-    assert ''.join(iterdecode([
+    assert ''.join(iter_decode([
         b'', b'h\xe9', b'llo'], 'x-user-defined')) == 'h\uF7E9llo'
 
 
 def test_iter_encode():
-    iterencode = lambda string, label: lookup(label).iter_encode(string)
-    assert b''.join(iterencode([], 'latin1')) == b''
-    assert b''.join(iterencode([''], 'latin1')) == b''
-    assert b''.join(iterencode(['é'], 'latin1')) == b'\xe9'
-    assert b''.join(iterencode(['', 'é', '', ''], 'latin1')) == b'\xe9'
-    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16')) == b'\xe9\x00'
-    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16le')) == b'\xe9\x00'
-    assert b''.join(iterencode(['', 'é', '', ''], 'utf-16be')) == b'\x00\xe9'
-    assert b''.join(iterencode([
+    assert b''.join(iter_encode([], 'latin1')) == b''
+    assert b''.join(iter_encode([''], 'latin1')) == b''
+    assert b''.join(iter_encode(['é'], 'latin1')) == b'\xe9'
+    assert b''.join(iter_encode(['', 'é', '', ''], 'latin1')) == b'\xe9'
+    assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16')) == b'\xe9\x00'
+    assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16le')) == b'\xe9\x00'
+    assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16be')) == b'\x00\xe9'
+    assert b''.join(iter_encode([
         '', 'h\uF7E9', '', 'llo'], 'x-user-defined')) == b'h\xe9llo'
 
 
@@ -121,6 +117,5 @@ def test_x_user_defined():
     decoded = '2,\x0c\x0b\x1aO\uf7d9#\uf7cb\x0f\uf7c9\uf7bbt\uf7cf\uf7a8\uf7ca'
     encoded = b'aa'
     decoded = 'aa'
-    x_user_defined = lookup('x-user-defined')
-    assert x_user_defined.decode(encoded) == decoded
-    assert x_user_defined.encode(decoded) == encoded
+    assert decode(encoded, 'x-user-defined') == decoded
+    assert encode(decoded, 'x-user-defined') == encoded
