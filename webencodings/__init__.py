@@ -45,6 +45,9 @@ CACHE = {}
 def lookup(label):
     """
     Look for an encoding by its label.
+    This is the spec’s `get an encoding
+    <http://encoding.spec.whatwg.org/#concept-encoding-get>`_ algorithm.
+    Supported labels are listed there.
 
     :param label: A string.
     :returns:
