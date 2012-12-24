@@ -12,8 +12,18 @@
 """
 
 from __future__ import unicode_literals
+from contextlib import contextmanager
+
 from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
                make_incremental_decoder, make_incremental_encoder)
+
+
+def assert_raises(exception, function, *args, **kwargs):
+    try:
+        function(*args, **kwargs)
+    except exception:
+        return
+    raise AssertionError('Did not raise %s.' % exception)
 
 
 def test_labels():
@@ -36,7 +46,6 @@ def test_labels():
 
 
 def test_all_labels():
-    """Encoding name can be used with Python’s .encode()"""
     for label in LABELS:
         assert decode(b'', label) == ''
         assert encode('', label) == b''
@@ -49,6 +58,15 @@ def test_all_labels():
         encoder = make_incremental_encoder(label)
         assert encoder('') == b''
         assert encoder('', final=True) == b''
+
+
+def test_invalid_label():
+    assert_raises(LookupError, decode, b'\xEF\xBB\xBF\xc3\xa9', 'invalid')
+    assert_raises(LookupError, encode, 'é', 'invalid')
+    assert_raises(LookupError, iter_decode, [], 'invalid')
+    assert_raises(LookupError, iter_encode, [], 'invalid')
+    assert_raises(LookupError, make_incremental_decoder, 'invalid')
+    assert_raises(LookupError, make_incremental_encoder, 'invalid')
 
 
 def test_decode():

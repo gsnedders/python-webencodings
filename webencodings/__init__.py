@@ -51,8 +51,7 @@ def lookup(label):
 
     :param label: A string.
     :returns:
-        An :class:`Encoding` object,
-        or :obj:`None` if the label is not valid per the standard.
+        An :class:`Encoding` object, or :obj:`None` for an unknown label.
 
     """
     # ASCII_WHITESPACE is Unicode, so the result of .strip() is Unicode.
@@ -74,16 +73,22 @@ def lookup(label):
     return encoding
 
 
-def _get_encoding(encoding):
+def _get_codec_info(encoding):
     """
     Accept either an encoding object or label.
 
     :param encoding: An :class:`Encoding` object or a label string.
-    :returns:
-        An :class:`Encoding` object,
-        or :obj:`None` if the label is not valid per the standard.
+    :returns: A :class:`codecs.CodecInfo` object.
+    :raises: :exc:`LookupError` for an unknown label.
+
     """
-    return encoding if hasattr(encoding, '_decoder') else lookup(encoding)
+    if not hasattr(encoding, '_decoder'):
+        result = lookup(encoding)
+        if result is None:
+            raise LookupError('Unknown encoding label: %r' % encoding)
+        else:
+            encoding = result
+    return encoding.codec_info
 
 
 class Encoding(object):
@@ -110,7 +115,7 @@ def decode(input, fallback_encoding, errors='replace'):
     :return: An Unicode string
 
     """
-    encoding = _get_encoding(fallback_encoding)
+    codec_info = _get_codec_info(fallback_encoding)
     if input.startswith((b'\xFF\xFE', b'\xFE\xFF')):
         # Python’s utf_16 picks BE or LE based on the BOM.
         decoder = UTF16_DECODER
@@ -118,7 +123,7 @@ def decode(input, fallback_encoding, errors='replace'):
         # Python’s utf_8_sig skips the BOM.
         decoder = UTF8_SIG_DECODER
     else:
-        decoder = encoding.codec_info.decode
+        decoder = codec_info.decode
     return decoder(input, errors)[0]
 
 
@@ -132,7 +137,7 @@ def encode(input, encoding=UTF8, errors='strict'):
     :return: A byte string.
 
     """
-    return _get_encoding(encoding).codec_info.encode(input, errors)[0]
+    return _get_codec_info(encoding).encode(input, errors)[0]
 
 
 def iter_decode(input, fallback_encoding, errors='replace'):
@@ -147,14 +152,10 @@ def iter_decode(input, fallback_encoding, errors='replace'):
     :returns: An iterable of Unicode strings.
 
     """
+    # Fail early if `fallback_encoding` is an invalid label.
     decoder = make_incremental_decoder(fallback_encoding, errors)
-    for chunck in input:
-        output = decoder(chunck)
-        if output:
-            yield output
-    output = decoder(b'', True)
-    if output:
-        yield output
+    return _iter_function(input, decoder, b'')
+
 
 def iter_encode(input, encoding=UTF8, errors='strict'):
     """
@@ -166,12 +167,17 @@ def iter_encode(input, encoding=UTF8, errors='strict'):
     :returns: An iterable of byte strings.
 
     """
+    # Fail early if `encoding` is an invalid label.
     encoder = make_incremental_encoder(encoding, errors)
+    return _iter_function(input, encoder, '')
+
+
+def _iter_function(input, function, empty):
     for chunck in input:
-        output = encoder(chunck)
+        output = function(chunck)
         if output:
             yield output
-    output = encoder('', True)
+    output = function(empty, True)
     if output:
         yield output
 
@@ -196,8 +202,7 @@ def make_incremental_decoder(fallback_encoding, errors='replace'):
             :returns: An Unicode string.
 
     """
-    fallback_decoder = (
-        _get_encoding(fallback_encoding).codec_info.incrementaldecoder)
+    fallback_decoder = _get_codec_info(fallback_encoding).incrementaldecoder
     # Using a mutable dict to simulate nonlocal on Python 2.x
     state = dict(buffer=b'', decoder=None)
     def incremental_decoder(input, final=False):
@@ -242,4 +247,4 @@ def make_incremental_encoder(encoding=UTF8, errors='strict'):
             :returns: A byte string.
 
     """
-    return _get_encoding(encoding).codec_info.incrementalencoder(errors).encode
+    return _get_codec_info(encoding).incrementalencoder(errors).encode
