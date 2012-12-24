@@ -100,6 +100,7 @@ class Encoding(object):
         return '<Encoding %s>' % self.name
 
 
+#: The UTF-8 encoding. Should be used for new content and formats.
 UTF8 = lookup('utf-8')
 
 

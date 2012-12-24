@@ -52,6 +52,8 @@ API
         a stdlib :class:`~codecs.CodecInfo` object.
         See :func:`codecs.register`.
 
+.. autodata:: UTF8
+
 .. autofunction:: decode
 .. autofunction:: encode
 .. autofunction:: iter_decode
