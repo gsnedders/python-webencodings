@@ -79,7 +79,7 @@ def _get_codec_info(encoding):
 
     :param encoding: An :class:`Encoding` object or a label string.
     :returns: A :class:`codecs.CodecInfo` object.
-    :raises: :exc:`LookupError` for an unknown label.
+    :raises: :exc:`~exceptions.LookupError` for an unknown label.
 
     """
     if not hasattr(encoding, '_decoder'):
@@ -113,15 +113,16 @@ def decode(input, fallback_encoding, errors='replace'):
         An :class:`Encoding` object or a label string.
         Ignored if :obj:`input` has a BOM.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :return: An Unicode string
 
     """
     codec_info = _get_codec_info(fallback_encoding)
     if input.startswith((b'\xFF\xFE', b'\xFE\xFF')):
-        # Python’s utf_16 picks BE or LE based on the BOM.
+        # UTF-16 BOM. Python’s utf_16 skips it and uses it to pick BE or LE.
         decoder = UTF16_DECODER
     elif input.startswith(b'\xEF\xBB\xBF'):
-        # Python’s utf_8_sig skips the BOM.
+        # UTF-8 BOM. Python’s utf_8_sig skips it.
         decoder = UTF8_SIG_DECODER
     else:
         decoder = codec_info.decode
@@ -135,6 +136,7 @@ def encode(input, encoding=UTF8, errors='strict'):
     :param input: An Unicode string.
     :param encoding: An :class:`Encoding` object or a label string.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :return: A byte string.
 
     """
@@ -150,6 +152,7 @@ def iter_decode(input, fallback_encoding, errors='replace'):
         An :class:`Encoding` object or a label string.
         Ignored if :obj:`input` has a BOM.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :returns: An iterable of Unicode strings.
 
     """
@@ -165,6 +168,7 @@ def iter_encode(input, encoding=UTF8, errors='strict'):
     :param input: An iterable of Unicode strings.
     :param encoding: An :class:`Encoding` object or a label string.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :returns: An iterable of byte strings.
 
     """
@@ -191,9 +195,11 @@ def make_incremental_decoder(fallback_encoding, errors='replace'):
         An :class:`Encoding` object or a label string.
         Ignored if :obj:`input` has a BOM.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :returns:
         An incremental decoder callable like this:
 
+        .. currentmodule:: None
         .. function:: incremental_decoder(input, final=False)
 
             :param input: A byte string.
@@ -212,7 +218,7 @@ def make_incremental_decoder(fallback_encoding, errors='replace'):
             buffer = state['buffer'] + input
             if buffer.startswith((b'\xFF\xFE', b'\xFE\xFF')):
                 # UTF-16 BOM.
-                # Python’s utf_16 skips it and uses it to picks BE or LE.
+                # Python’s utf_16 skips it and uses it to pick BE or LE.
                 decoder = INCREMENTAL_UTF16_DECODER
             elif buffer.startswith(b'\xEF\xBB\xBF'):
                 # UTF-8 BOM. Python’s utf_8_sig skips it.
@@ -236,9 +242,11 @@ def make_incremental_encoder(encoding=UTF8, errors='strict'):
 
     :param encoding: An :class:`Encoding` object or a label string.
     :param errors: Type of error handling. See :func:`codecs.register`.
+    :raises: :exc:`~exceptions.LookupError` for an unknown encoding label.
     :returns:
         An incremental encoder callable like this:
 
+        .. currentmodule:: None
         .. function:: incremental_encoder(input, final=False)
 
             :param input: An Unicode string.

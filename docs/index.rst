@@ -58,5 +58,6 @@ API
 .. autofunction:: encode
 .. autofunction:: iter_decode
 .. autofunction:: iter_encode
-.. autofunction:: make_incremental_decoder
-.. autofunction:: make_incremental_encoder
+.. autofunction:: webencodings.make_incremental_decoder
+.. currentmodule:: webencodings
+.. autofunction:: webencodings.make_incremental_encoder
