@@ -20,7 +20,7 @@ import codecs
 from .labels import LABELS
 
 
-VERSION = '0.1'
+VERSION = '0.2'
 
 # U+0009, U+000A, U+000C, U+000D, and U+0020.
 ASCII_WHITESPACE = '\t\n\f\r '
