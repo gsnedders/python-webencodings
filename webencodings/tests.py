@@ -12,10 +12,9 @@
 """
 
 from __future__ import unicode_literals
-from contextlib import contextmanager
 
 from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
-               make_incremental_decoder, make_incremental_encoder)
+               make_incremental_decoder, make_incremental_encoder, UTF8)
 
 
 def assert_raises(exception, function, *args, **kwargs):
@@ -34,15 +33,15 @@ def test_labels():
     assert lookup('utf8').name == 'utf-8'
     assert lookup('utf8 ').name == 'utf-8'
     assert lookup(' \r\nutf8\t').name == 'utf-8'
-    assert lookup('u8') == None  # Python label.
-    assert lookup('utf-8 ') == None  # Non-ASCII white space.
+    assert lookup('u8') is None  # Python label.
+    assert lookup('utf-8 ') is None  # Non-ASCII white space.
 
     assert lookup('US-ASCII').name == 'windows-1252'
     assert lookup('iso-8859-1').name == 'windows-1252'
     assert lookup('latin1').name == 'windows-1252'
     assert lookup('LATIN1').name == 'windows-1252'
-    assert lookup('latin-1') == None
-    assert lookup('LATİN1') == None  # ASCII-only case insensitivity.
+    assert lookup('latin-1') is None
+    assert lookup('LATİN1') is None  # ASCII-only case insensitivity.
 
 
 def test_all_labels():
@@ -74,7 +73,9 @@ def test_invalid_label():
 
 def test_decode():
     assert decode(b'\x80', 'latin1') == '€'
+    assert decode(b'\x80', lookup('latin1')) == '€'
     assert decode(b'\xc3\xa9', 'utf8') == 'é'
+    assert decode(b'\xc3\xa9', UTF8) == 'é'
     assert decode(b'\xc3\xa9', 'ascii') == 'Ã©'
     assert decode(b'\xEF\xBB\xBF\xc3\xa9', 'ascii') == 'é'  # UTF-8 with BOM
 

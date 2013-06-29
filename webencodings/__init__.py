@@ -20,7 +20,7 @@ import codecs
 from .labels import LABELS
 
 
-VERSION = '0.2'
+VERSION = '0.3'
 
 # U+0009, U+000A, U+000C, U+000D, and U+0020.
 ASCII_WHITESPACE = '\t\n\f\r '
@@ -82,7 +82,7 @@ def _get_codec_info(encoding):
     :raises: :exc:`~exceptions.LookupError` for an unknown label.
 
     """
-    if not hasattr(encoding, '_decoder'):
+    if not hasattr(encoding, 'codec_info'):
         result = lookup(encoding)
         if result is None:
             raise LookupError('Unknown encoding label: %r' % encoding)
