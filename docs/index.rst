@@ -51,3 +51,4 @@ API
 .. autoclass:: IncrementalDecoder
     :members:
 .. autoclass:: IncrementalEncoder
+.. autofunction:: ascii_lower
