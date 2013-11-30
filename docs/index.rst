@@ -48,5 +48,6 @@ API
 .. autofunction:: encode
 .. autofunction:: iter_decode
 .. autofunction:: iter_encode
-.. autofunction:: webencodings.make_incremental_decoder
-.. autofunction:: webencodings.make_incremental_encoder
+.. autoclass:: IncrementalDecoder
+    :members:
+.. autoclass:: IncrementalEncoder
