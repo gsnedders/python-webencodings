@@ -9,7 +9,7 @@ This is a Python implementation of the `WHATWG Encoding standard
   https://github.com/SimonSapin/python-webencodings
 * PyPI releases: http://pypi.python.org/pypi/webencodings
 * License: BSD
-* Python 2.6+ and 3.1+
+* Python 2.6+ and 3.2+
 
 In order to be compatible with legacy web content
 when interpreting something like ``Content-Type: text/html; charset=latin1``,
