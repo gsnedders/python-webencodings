@@ -22,11 +22,7 @@ from .labels import LABELS
 
 VERSION = '0.3'
 
-# U+0009, U+000A, U+000C, U+000D, and U+0020.
-ASCII_WHITESPACE = '\t\n\f\r '
 
-ASCII_LOWERCASE_MAP = dict(zip(map(ord, string.ascii_uppercase),
-                               map(ord, string.ascii_lowercase)))
 UTF8_SIG_DECODER = codecs.getdecoder('utf_8_sig')
 UTF16_DECODER = codecs.getdecoder('utf_16')
 INCREMENTAL_UTF8_SIG_DECODER = codecs.getincrementaldecoder('utf_8_sig')
@@ -42,6 +38,32 @@ PYTHON_NAMES = {
 CACHE = {}
 
 
+def ascii_lower(string):
+    r"""Transform (only) ASCII letters to lower case: A-Z is mapped to a-z.
+
+    :param string: An Unicode string.
+    :returns: A new Unicode string.
+
+    This is used for `ASCII case-insensitive
+    <http://encoding.spec.whatwg.org/#ascii-case-insensitive>`_
+    matching of encoding labels.
+    The same matching is also used, among others,
+    for `CSS keywords <http://dev.w3.org/csswg/css-values/#keywords>`_.
+
+    This is different from just using :meth:`unicode.lower`
+    which will also affect non-ASCII characters,
+    sometimes mapping them into the ASCII range:
+
+        >>> keyword = u'Bac\N{KELVIN SIGN}ground'
+        >>> assert keyword.lower() == u'background'
+        >>> assert ascii_lower(keyword) != keyword.lower()
+        >>> assert ascii_lower(keyword) == u'bac\N{KELVIN SIGN}ground'
+
+    """
+    # This turns out to be faster than unicode.translate()
+    return string.encode('utf8').lower().decode('utf8')
+
+
 def lookup(label):
     """
     Look for an encoding by its label.
@@ -54,9 +76,8 @@ def lookup(label):
         An :class:`Encoding` object, or :obj:`None` for an unknown label.
 
     """
-    # ASCII_WHITESPACE is Unicode, so the result of .strip() is Unicode.
-    # We want the Unicode version of .translate().
-    label = label.strip(ASCII_WHITESPACE).translate(ASCII_LOWERCASE_MAP)
+    # Only strip ASCII whitespace: U+0009, U+000A, U+000C, U+000D, and U+0020.
+    label = ascii_lower(label.strip('\t\n\f\r '))
     name = LABELS.get(label)
     if name is None:
         return None
