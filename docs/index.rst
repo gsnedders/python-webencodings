@@ -40,17 +40,7 @@ API
 
 .. autofunction:: lookup
 
-.. class:: Encoding()
-
-    .. attribute:: name
-
-        Canonical name of the encoding
-
-    .. attribute:: codec_info
-
-        The actual implementation of the encoding,
-        a stdlib :class:`~codecs.CodecInfo` object.
-        See :func:`codecs.register`.
+.. autoclass:: Encoding()
 
 .. autodata:: UTF8
 
@@ -59,5 +49,4 @@ API
 .. autofunction:: iter_decode
 .. autofunction:: iter_encode
 .. autofunction:: webencodings.make_incremental_decoder
-.. currentmodule:: webencodings
 .. autofunction:: webencodings.make_incremental_encoder

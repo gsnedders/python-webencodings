@@ -113,6 +113,20 @@ def _get_codec_info(encoding):
 
 
 class Encoding(object):
+    """Reresents a character encoding such as UTF-8,
+    that can be used for decoding or encoding.
+
+    .. attribute:: name
+
+        Canonical name of the encoding
+
+    .. attribute:: codec_info
+
+        The actual implementation of the encoding,
+        a stdlib :class:`~codecs.CodecInfo` object.
+        See :func:`codecs.register`.
+
+    """
     def __init__(self, name, codec_info):
         self.name = name
         self.codec_info = codec_info
@@ -228,6 +242,7 @@ def make_incremental_decoder(fallback_encoding, errors='replace'):
                 Indicate that no more input is available.
                 Must be :obj:`True` if this is the last call.
             :returns: An Unicode string.
+        .. currentmodule:: webencodings
 
     """
     fallback_decoder = _get_codec_info(fallback_encoding).incrementaldecoder
@@ -275,6 +290,7 @@ def make_incremental_encoder(encoding=UTF8, errors='strict'):
                 Indicate that no more input is available.
                 Must be :obj:`True` if this is the last call.
             :returns: A byte string.
+        .. currentmodule:: webencodings
 
     """
     return _get_codec_info(encoding).incrementalencoder(errors).encode
