@@ -41,11 +41,11 @@ def ascii_lower(string):
     This is used for `ASCII case-insensitive
     <http://encoding.spec.whatwg.org/#ascii-case-insensitive>`_
     matching of encoding labels.
-    The same matching is also used, among others,
+    The same matching is also used, among other things,
     for `CSS keywords <http://dev.w3.org/csswg/css-values/#keywords>`_.
 
-    This is different from just using :meth:`unicode.lower`
-    which will also affect non-ASCII characters,
+    This is different from the :meth:`~py:str.lower` method of Unicode strings
+    which also affect non-ASCII characters,
     sometimes mapping them into the ASCII range:
 
         >>> keyword = u'Bac\N{KELVIN SIGN}ground'
