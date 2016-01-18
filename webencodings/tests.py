@@ -47,7 +47,7 @@ def test_labels():
 
 def test_all_labels():
     for label in LABELS:
-        assert decode(b'', label) == ''
+        assert decode(b'', label) == ('', lookup(label))
         assert encode('', label) == b''
         for repeat in [0, 1, 12]:
             output, _ = iter_decode([b''] * repeat, label)
@@ -74,25 +74,25 @@ def test_invalid_label():
 
 
 def test_decode():
-    assert decode(b'\x80', 'latin1') == '€'
-    assert decode(b'\x80', lookup('latin1')) == '€'
-    assert decode(b'\xc3\xa9', 'utf8') == 'é'
-    assert decode(b'\xc3\xa9', UTF8) == 'é'
-    assert decode(b'\xc3\xa9', 'ascii') == 'Ã©'
-    assert decode(b'\xEF\xBB\xBF\xc3\xa9', 'ascii') == 'é'  # UTF-8 with BOM
+    assert decode(b'\x80', 'latin1') == ('€', lookup('latin1'))
+    assert decode(b'\x80', lookup('latin1')) == ('€', lookup('latin1'))
+    assert decode(b'\xc3\xa9', 'utf8') == ('é', lookup('utf8'))
+    assert decode(b'\xc3\xa9', UTF8) == ('é', lookup('utf8'))
+    assert decode(b'\xc3\xa9', 'ascii') == ('Ã©', lookup('ascii'))
+    assert decode(b'\xEF\xBB\xBF\xc3\xa9', 'ascii') == ('é', lookup('utf8'))  # UTF-8 with BOM
 
-    assert decode(b'\xFE\xFF\x00\xe9', 'ascii') == 'é'  # UTF-16-BE with BOM
-    assert decode(b'\xFF\xFE\xe9\x00', 'ascii') == 'é'  # UTF-16-LE with BOM
-    assert decode(b'\xFE\xFF\xe9\x00', 'ascii') == '\ue900'
-    assert decode(b'\xFF\xFE\x00\xe9', 'ascii') == '\ue900'
+    assert decode(b'\xFE\xFF\x00\xe9', 'ascii') == ('é', lookup('utf-16be'))  # UTF-16-BE with BOM
+    assert decode(b'\xFF\xFE\xe9\x00', 'ascii') == ('é', lookup('utf-16le'))  # UTF-16-LE with BOM
+    assert decode(b'\xFE\xFF\xe9\x00', 'ascii') == ('\ue900', lookup('utf-16be'))
+    assert decode(b'\xFF\xFE\x00\xe9', 'ascii') == ('\ue900', lookup('utf-16le'))
 
-    assert decode(b'\x00\xe9', 'UTF-16BE') == 'é'
-    assert decode(b'\xe9\x00', 'UTF-16LE') == 'é'
-    assert decode(b'\xe9\x00', 'UTF-16') == 'é'
+    assert decode(b'\x00\xe9', 'UTF-16BE') == ('é', lookup('utf-16be'))
+    assert decode(b'\xe9\x00', 'UTF-16LE') == ('é', lookup('utf-16le'))
+    assert decode(b'\xe9\x00', 'UTF-16') == ('é', lookup('utf-16le'))
 
-    assert decode(b'\xe9\x00', 'UTF-16BE') == '\ue900'
-    assert decode(b'\x00\xe9', 'UTF-16LE') == '\ue900'
-    assert decode(b'\x00\xe9', 'UTF-16') == '\ue900'
+    assert decode(b'\xe9\x00', 'UTF-16BE') == ('\ue900', lookup('utf-16be'))
+    assert decode(b'\x00\xe9', 'UTF-16LE') == ('\ue900', lookup('utf-16le'))
+    assert decode(b'\x00\xe9', 'UTF-16') == ('\ue900', lookup('utf-16le'))
 
 
 def test_encode():
@@ -149,5 +149,5 @@ def test_x_user_defined():
     decoded = '2,\x0c\x0b\x1aO\uf7d9#\uf7cb\x0f\uf7c9\uf7bbt\uf7cf\uf7a8\uf7ca'
     encoded = b'aa'
     decoded = 'aa'
-    assert decode(encoded, 'x-user-defined') == decoded
+    assert decode(encoded, 'x-user-defined') == (decoded, lookup('x-user-defined'))
     assert encode(decoded, 'x-user-defined') == encoded
