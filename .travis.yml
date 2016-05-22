@@ -1,0 +1,28 @@
+language: python
+python: 3.4
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+env:
+  - TOXENV=py26
+  - TOXENV=py27
+  - TOXENV=py33
+  - TOXENV=py34
+  - TOXENV=pypy
+
+# Hack around the Travis CI image not containing 3.5 by default
+matrix:
+  include:
+    - python: 3.5
+      env:
+        - TOXENV=py35
+
+install:
+  - pip install -U tox
+
+script:
+  - tox
