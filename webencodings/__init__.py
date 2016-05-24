@@ -185,7 +185,7 @@ def encode(input, encoding=UTF8, errors='strict'):
 
 def iter_decode(input, fallback_encoding, errors='replace'):
     """
-    “Pull”-based decoder.
+    "Pull"-based decoder.
 
     :param input:
         An iterable of byte strings.
