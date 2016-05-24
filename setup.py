@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
+from io import open
 from os import path
 import re
 
 
 VERSION = re.search("VERSION = '([^']+)'", open(
-    path.join(path.dirname(__file__), 'webencodings', '__init__.py')
+    path.join(path.dirname(__file__), 'webencodings', '__init__.py'),
+    encoding='utf-8'
 ).read().strip()).group(1)
 
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
