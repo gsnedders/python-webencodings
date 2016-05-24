@@ -6,7 +6,7 @@ This is a Python implementation of the `WHATWG Encoding standard
 
 * Latest documentation: http://packages.python.org/webencodings/
 * Source code and issue tracker:
-  https://github.com/SimonSapin/python-webencodings
+  https://github.com/gsnedders/python-webencodings
 * PyPI releases: http://pypi.python.org/pypi/webencodings
 * License: BSD
 * Python 2.6+ and 3.2+
