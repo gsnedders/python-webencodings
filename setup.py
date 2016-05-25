@@ -9,7 +9,10 @@ VERSION = re.search("VERSION = '([^']+)'", io.open(
     encoding='utf-8'
 ).read().strip()).group(1)
 
-LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
+LONG_DESCRIPTION = io.open(
+    path.join(path.dirname(__file__), 'README.rst'),
+    encoding='utf-8'
+).read()
 
 
 setup(
