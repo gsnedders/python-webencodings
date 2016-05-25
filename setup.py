@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
-from io import open
+import io
 from os import path
 import re
 
 
-VERSION = re.search("VERSION = '([^']+)'", open(
+VERSION = re.search("VERSION = '([^']+)'", io.open(
     path.join(path.dirname(__file__), 'webencodings', '__init__.py'),
     encoding='utf-8'
 ).read().strip()).group(1)
