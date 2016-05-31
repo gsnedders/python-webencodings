@@ -19,7 +19,7 @@ import codecs
 from .labels import LABELS
 
 
-VERSION = '0.4'
+VERSION = '0.5'
 
 
 # Some names in Encoding are not valid Python aliases. Remap these.
