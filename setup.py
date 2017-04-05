@@ -22,6 +22,8 @@ setup(
     license='BSD',
     author='Simon Sapin',
     author_email='simon.sapin@exyr.org',
+    maintainer='Geoffrey Sneddon',
+    maintainer_email='me@gsnedders.com',
     description='Character encoding aliases for legacy web content',
     long_description=LONG_DESCRIPTION,
     classifiers=[
