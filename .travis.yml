@@ -1,5 +1,5 @@
 language: python
-python: 3.6
+python: 3.4
 
 sudo: false
 
@@ -10,7 +10,6 @@ env:
   - TOXENV=py27
   - TOXENV=py33
   - TOXENV=py34
-  - TOXENV=py36
   - TOXENV=pypy
 
 # Hack around the Travis CI image not containing 3.5 by default
@@ -19,6 +18,9 @@ matrix:
     - python: 3.5
       env:
         - TOXENV=py35
+    - python: 3.6
+      env:
+        - TOXENV=py36
 
 install:
   - pip install -U tox
