@@ -13,8 +13,9 @@
 
 from __future__ import unicode_literals
 
-from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
-               IncrementalDecoder, IncrementalEncoder, UTF8)
+from webencodings import (lookup, LABELS, decode, encode, iter_decode,
+                          iter_encode, IncrementalDecoder, IncrementalEncoder,
+                          UTF8)
 
 
 def assert_raises(exception, function, *args, **kwargs):
