@@ -46,7 +46,8 @@ LABELS = {
          repr(encoding['name']).lstrip('u'))
         for category in json.loads(urlopen(url).read().decode('ascii'))
         for encoding in category['encodings']
-        for label in encoding['labels']]
+        for label in encoding['labels']
+        if not encoding['name'] == 'replacement']
     max_len = max(len(label) for label, name in labels)
     parts.extend(
         '    %s:%s %s,\n' % (label, ' ' * (max_len - len(label)), name)

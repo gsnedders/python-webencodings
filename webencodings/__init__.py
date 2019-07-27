@@ -75,6 +75,8 @@ def lookup(label):
     name = LABELS.get(label)
     if name is None:
         return None
+    else:
+        name = name.lower()
     encoding = CACHE.get(name)
     if encoding is None:
         if name == 'x-user-defined':

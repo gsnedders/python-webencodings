@@ -61,7 +61,7 @@ def test_all_labels():
         assert encoder.encode('', final=True) == b''
     # All encoding names are valid labels too:
     for name in set(LABELS.values()):
-        assert lookup(name).name == name
+        assert lookup(name).name == name.lower()
 
 
 def test_invalid_label():
