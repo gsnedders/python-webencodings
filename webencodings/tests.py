@@ -47,18 +47,21 @@ def test_labels():
 
 def test_all_labels():
     for label in LABELS:
-        assert decode(b'', label) == ('', lookup(label))
-        assert encode('', label) == b''
-        for repeat in [0, 1, 12]:
-            output, _ = iter_decode([b''] * repeat, label)
-            assert list(output) == []
-            assert list(iter_encode([''] * repeat, label)) == []
-        decoder = IncrementalDecoder(label)
-        assert decoder.decode(b'') == ''
-        assert decoder.decode(b'', final=True) == ''
-        encoder = IncrementalEncoder(label)
-        assert encoder.encode('') == b''
-        assert encoder.encode('', final=True) == b''
+        if lookup(label).name != 'replacement':
+            assert decode(b'', label) == ('', lookup(label))
+            assert encode('', label) == b''
+            for repeat in [0, 1, 12]:
+                output, _ = iter_decode([b''] * repeat, label)
+                assert list(output) == []
+                assert list(iter_encode([''] * repeat, label)) == []
+            decoder = IncrementalDecoder(label)
+            assert decoder.decode(b'') == ''
+            assert decoder.decode(b'', final=True) == ''
+            encoder = IncrementalEncoder(label)
+            assert encoder.encode('') == b''
+            assert encoder.encode('', final=True) == b''
+        else:
+            assert_raises(UnicodeError, decode, b'', label)
     # All encoding names are valid labels too:
     for name in set(LABELS.values()):
         assert lookup(name).name == name.lower()

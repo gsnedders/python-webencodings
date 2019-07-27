@@ -81,6 +81,8 @@ def lookup(label):
     if encoding is None:
         if name == 'x-user-defined':
             from .x_user_defined import codec_info
+        elif name == 'replacement':
+            from .replacement import codec_info
         else:
             python_name = PYTHON_NAMES.get(name, name)
             # Any python_name value that gets to here should be valid.
