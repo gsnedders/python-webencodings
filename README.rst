@@ -1,4 +1,4 @@
-python-webencodings
+python-webencodings-reviews
 ===================
 
 This is a Python implementation of the `WHATWG Encoding standard
