@@ -18,7 +18,7 @@ LONG_DESCRIPTION = io.open(
 setup(
     name='webencodings',
     version=VERSION,
-    url='https://github.com/SimonSapin/python-webencodings',
+    url='https://github.com/gsnedders/python-webencodings',
     license='BSD',
     author='Simon Sapin',
     author_email='simon.sapin@exyr.org',
