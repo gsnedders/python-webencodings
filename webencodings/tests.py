@@ -14,7 +14,7 @@
 from __future__ import unicode_literals
 
 from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
-               IncrementalDecoder, IncrementalEncoder, UTF8)
+               IncrementalDecoder, IncrementalEncoder, UTF8, PYTHON_NAMES)
 
 
 def assert_raises(exception, function, *args, **kwargs):
@@ -43,6 +43,21 @@ def test_labels():
     assert lookup('LATIN1').name == 'windows-1252'
     assert lookup('latin-1') is None
     assert lookup('LATİN1') is None  # ASCII-only case insensitivity.
+
+
+def test_remapping():
+    def codec_name(name):
+        encoding = lookup(name)
+        assert encoding is not None
+        return encoding.codec_info.name
+
+    assert codec_name('iso-8859-8-i') == 'iso8859-8'
+    assert codec_name('x-mac-cyrillic') == 'mac-cyrillic'
+    assert codec_name('macintosh') == 'mac-roman'
+    assert codec_name('windows-874') == 'cp874'
+    assert codec_name('shift_jis') == 'cp932'
+    assert codec_name('big5') == 'big5hkscs'
+    assert codec_name('euc-kr') == 'cp949'
 
 
 def test_all_labels():
@@ -93,6 +108,16 @@ def test_decode():
     assert decode(b'\xe9\x00', 'UTF-16BE') == ('\ue900', lookup('utf-16be'))
     assert decode(b'\x00\xe9', 'UTF-16LE') == ('\ue900', lookup('utf-16le'))
     assert decode(b'\x00\xe9', 'UTF-16') == ('\ue900', lookup('utf-16le'))
+
+
+def test_decode_legacy_cjk():
+    assert decode(b'\x87\x82\x87@ \xedB', "windows-31j") == (
+        "№① 鍈", lookup("shift-jis"))
+    assert decode(b'\xc7g\xc6\xf1\xc6\xfd\xc7g\xc6\xf1\xc6\xfd', "big5-hkscs") == (
+        "むかしむかし", lookup("big5"))
+    assert decode(b'\x8cc\xb9\xe6\xb0\xa2\xc7\xcf', "windows-949") == (
+        "똠방각하", lookup("euc-kr"))
+    assert decode(b'\x92w', 'big5') == ('㐵', lookup('big5'))
 
 
 def test_encode():
