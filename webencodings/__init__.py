@@ -22,12 +22,18 @@ from .labels import LABELS
 VERSION = '0.6-dev'
 
 
-# Some names in Encoding are not valid Python aliases. Remap these.
 PYTHON_NAMES = {
-    'iso-8859-8-i': 'iso-8859-8',
+    # Some names in Encoding are not valid Python aliases. Remap these:
+    'iso-8859-8-i': 'iso8859-8',
     'x-mac-cyrillic': 'mac-cyrillic',
     'macintosh': 'mac-roman',
-    'windows-874': 'cp874'}
+    'windows-874': 'cp874',
+    # Some WHATWG-defined names conflict with a Python alias for an
+    # incompatible codec. These should be remapped to the correct one:
+    'shift_jis': 'cp932',
+    'big5': 'big5hkscs',
+    'euc-kr': 'cp949',
+}
 
 CACHE = {}
 
